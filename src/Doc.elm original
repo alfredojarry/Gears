@@ -57,7 +57,6 @@ type Shortcut
     | Play
     | Left
     | Right
-    | CleanView --mod
     | Suppr
     | Pack
 
@@ -228,19 +227,7 @@ update msg doc =
 
                 Right ->
                     update (MobileMsg <| Editor.CursorRight) doc
-                    
-                CleanView -> --mod
-                    let --
-                        { mobile, parentUid, cleanedView } = --
-                            getCleanedView doc --
-                    in --
-                    ( { doc --
-                        | viewing = cleanedView --
-                        , editor = Editor.changeView (Just mobile) parentUid doc.editor --
-                      } --
-                    , Cmd.none --
-                    ) --
-         
+
         DirectionRepeat dir ->
             update (MobileMsg <| Editor.SvgMsg <| PanSvg.Pan dir) doc
 
@@ -393,8 +380,7 @@ viewTop doc =
 viewNav : Model -> Element Msg
 viewNav doc =
     row
-        --[ width fill, padding 10, spacing 5 ] --original
-        [padding 10, moveRight 5] --mod keyCode menu
+        [ width fill, padding 10, spacing 5 ]
     <|
         (List.intersperse (text ">") <|
             Input.button []

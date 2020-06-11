@@ -9,8 +9,7 @@ import Data.Content as Content
 import Data.Wheel as Wheel
 import Dict exposing (Dict)
 import Doc exposing (Doc)
--- import Editor.Interacting as Interacting --original
-import Editor.Interacting as Interacting exposing (Interactable(..)) --mod Pointers multitouch
+import Editor.Interacting as Interacting
 import Editor.Mobile as Editor
 import Element exposing (..)
 import Element.Background as Bg
@@ -152,7 +151,6 @@ type Msg
     | GotScreenSize ScreenSize
     | DocMsg Doc.Msg
     | KeysMsg Keys.Msg
-    | KeysMimic (List Keys.Msg) --mod keyCode menu
     | NOOP
 
 
@@ -609,43 +607,6 @@ update msg model =
                     Doc.update subMsg model.doc
             in
             case subMsg of
-            
-                Doc.MobileMsg (Editor.InteractMsg subsubMsg) -> --mod Pointers multitouch
-                    let --
-                        ( interact, event ) = --
-                            Interact.update subsubMsg model.doc.editor.interact --
-                    in --
-                    case event of --
-                        Nothing -> --
-                            ( { model | doc = doc }, Cmd.map DocMsg cmd ) --
-                        Just e -> --
-                            case e.action of --
-                                Interact.MultiDragMode i -> --
-                                    case i of --
-                                        1 -> --
-                                            ( { model | doc = doc }, Cmd.map DocMsg cmd ) --
-                                            
-                                        _ -> --
-                                            let --
-                                                ( newModel, cmds ) = Tuple.mapSecond (\cm -> Cmd.batch [ cm, Cmd.map DocMsg cmd ]) <| --
-                                                   update (KeysMimic (List.map (\k -> Keys.HoldUp k) (Set.toList model.keys))) { model | doc = doc } --
-                                            in --
-                                                case i of --
-                                                    2 -> --
-                                                        Tuple.mapSecond (\cm -> Cmd.batch [ cm, cmds ]) <| update (KeysMsg (Keys.HoldDown "d")) newModel --
-                                                    _ -> --
-                                                        Tuple.mapSecond (\cm -> Cmd.batch [ cm, cmds ]) <| update (KeysMsg (Keys.HoldDown "z")) newModel --
-                                        
-                                Interact.DragEnded _ i -> --
-                                   case i of --
-                                        1 -> --
-                                            ( { model | doc = doc }, Cmd.map DocMsg cmd ) --
-
-                                        _ -> --
-                                            Tuple.mapSecond (\cm -> Cmd.batch [ cm, Cmd.map DocMsg cmd ]) <| update (KeysMimic [ Keys.HoldUp "d", Keys.HoldUp "z" ]) { model | doc = doc } --
-                                
-                                _ -> --
-                                    ( { model | doc = doc }, Cmd.map DocMsg cmd ) --               
                 -- FIXME Absurd... Should be a commonMsg and common ChangedMode
                 Doc.MobileMsg (Editor.ChangedMode (Editor.ChangeSound _)) ->
                     ( { model | doc = doc, fileExplorerTab = LoadedSounds }, Cmd.map DocMsg cmd )
@@ -696,15 +657,7 @@ update msg model =
                 )
                 ( { model | keys = state }, Cmd.none )
                 events
-                
-        KeysMimic events ->  --mod keyCode menu
-            List.foldl --
-                ( \subMsg (m,c) -> --
-                    Tuple.mapSecond (\cm -> Cmd.batch [ cm, c ]) <| update (KeysMsg (subMsg)) m --                                                   
-                )
-                ( model, Cmd.none ) --                                                 
-                events --
-                
+
         NOOP ->
             ( model, Cmd.none )
 
@@ -734,10 +687,8 @@ type Mode
 keyCodeToMode : Dict String Mode
 keyCodeToMode =
     Dict.fromList <|
-        -- [ ( "KeyE", Capsuling ) --original
-        -- , ( "KeyR", Downloading ) --
-        [ ( "e", Capsuling ) --mod keyboard
-        , ( "r", Downloading ) --
+        [ ( "KeyE", Capsuling )
+        , ( "KeyR", Downloading )
         ]
             ++ List.map (Tuple.mapSecond EditorMode) Doc.keyCodeToMode
 
@@ -745,58 +696,28 @@ keyCodeToMode =
 keyCodeToShortcut : Dict String Doc.Shortcut
 keyCodeToShortcut =
     Dict.fromList
-        -- [ ( "KeyZ", Doc.Tool 1 ) --original
-        -- , ( "KeyX", Doc.Tool 2 ) --
-        -- , ( "KeyC", Doc.Tool 3 ) --
-        -- , ( "Space", Doc.Play ) --
-        -- , ( "ArrowLeft", Doc.Left ) --
-        -- , ( "ArrowRight", Doc.Right ) --
-        -- , ( "Backspace", Doc.Suppr ) --
-        -- , ( "Delete", Doc.Suppr ) --
-        -- , ( "KeyT", Doc.Pack ) --
-        [ ( "w", Doc.Tool 1 ) --mod keyboard
-        , ( "x", Doc.Tool 2 ) --
-        , ( "c", Doc.Tool 3 ) --
-        , ( " ", Doc.Play ) --
-        , ( "ArrowLeft", Doc.Left ) --
-        , ( "ArrowRight", Doc.Right ) --
-        , ( "Backspace", Doc.Suppr ) --
-        , ( "Delete", Doc.Suppr ) --
-        , ( "t", Doc.Pack ) --
-        , ( "f", Doc.CleanView) --
+        [ ( "KeyZ", Doc.Tool 1 )
+        , ( "KeyX", Doc.Tool 2 )
+        , ( "KeyC", Doc.Tool 3 )
+        , ( "Space", Doc.Play )
+        , ( "ArrowLeft", Doc.Left )
+        , ( "ArrowRight", Doc.Right )
+        , ( "Backspace", Doc.Suppr )
+        , ( "Delete", Doc.Suppr )
+        , ( "KeyT", Doc.Pack )
         ]
 
 
 keyCodeToDirection : Dict String PanSvg.Direction
 keyCodeToDirection =
     Dict.fromList
-        -- [ ( "KeyO", PanSvg.Up ) --original
-        -- , ( "KeyK", PanSvg.Left ) --
-        -- , ( "KeyL", PanSvg.Down ) --
-        -- , ( "Semicolon", PanSvg.Right ) --
-           [ ( "o", PanSvg.Up ) --mod keyboard
-           , ( "k", PanSvg.Left ) --
-           , ( "l", PanSvg.Down ) --
-           , ( "m", PanSvg.Right ) --
-           ]
+        [ ( "KeyO", PanSvg.Up )
+        , ( "KeyK", PanSvg.Left )
+        , ( "KeyL", PanSvg.Down )
+        , ( "Semicolon", PanSvg.Right )
+        ]
 
-keyCodeToModeMenu : List ( String, String ) --mod keyCode menu
-keyCodeToModeMenu = --
-        [ ( "a", "(A) lterner" ) --
-        , ( "s", "(S) olo" ) --
-        , ( "v", "(V) oir" ) --
-        , ( "d", "(D) éplacer" ) --
-        , ( "Delete", "(Suppr) imer" ) --
-        , ( "z", "(Z) oom" ) --mod keyCode menu + touchZoom
-        ] --
 
-keyCodeToShortcutMenu : List ( String, String ) --mod keyCode menu
-keyCodeToShortcutMenu = --
-        [ ( "ArrowRight", "==>" ) --mod keyCode menu
-        , ( "ArrowLeft", "<==")  --
-        , ( "t", "(T) rousse" ) --
-        , ( "f", "(F) ocus") --
-        ] --
 
 -- VIEW
 
@@ -815,46 +736,10 @@ view model =
         [ layout [] <|
             row [ height <| px model.screenSize.height, width <| px model.screenSize.width ]
                 [ viewFileExplorer model
-                -- , Element.map DocMsg <| Doc.view model.doc --original
-                , column [ width fill, height fill ] --mod keyCode menu
-                    [ viewKeyCodeMenu model --
-                    , Element.map DocMsg <| Doc.view model.doc --
-                    ] --
+                , Element.map DocMsg <| Doc.view model.doc
                 ]
         ]
     }
-
-viewKeyCodeMenu : Model -> Element Msg --mod keyCode menu
-viewKeyCodeMenu model = --
-    row [ width fill, Font.size 14, spacing 20, padding 10] <| --
-            ( List.map --
-                ( \s -> --
-                    Input.button [ padding 5, Font.color <| --
-                        if Set.member (Tuple.first s) model.keys then --
-                            rgb 0.2 0.8 0.2 --
-                        else --
-                            rgb 0 0 0 --
-                    ] --
-                    { label = text <| Tuple.second s --
-                    , onPress = --
-                        if Set.member (Tuple.first s) model.keys then --
-                            Just <| KeysMimic [ Keys.HoldUp (Tuple.first s) ] --
-                        else --
-                            Just <| KeysMimic <| ( List.map ( \t -> Keys.HoldUp (Tuple.first t) ) keyCodeToModeMenu ) --
-                            ++ [ Keys.HoldDown (Tuple.first s) ] --
-                    } --                
-                ) <| --
-                    keyCodeToModeMenu --
-            ) --
-            ++ ( List.map --
-                ( \s -> --
-                    Input.button [ padding 5, Font.color <| rgb 0 0 0 ] --
-                    { label = text <| Tuple.second s --
-                    , onPress = Just <| KeysMimic [ Keys.HoldDown (Tuple.first s), Keys.HoldUp (Tuple.first s) ]  --
-                    } --                
-                ) <| --
-                    keyCodeToShortcutMenu --
-            ) --
 
 
 viewFileExplorer : Model -> Element Msg
@@ -994,11 +879,9 @@ viewSoundInLib model s id playing loading =
             ++ (if playing then
                     [ Element.html <|
                         Html.audio
-                            -- [ Attr.hidden True --original
-                            [ Attr.hidden False --mod Ios compatibility
+                            [ Attr.hidden True
                             , Attr.src <| Url.Builder.relative ("sons" :: id) []
-                            --, Attr.autoplay True --original
-                            , Attr.controls True --mod Ios compatibility
+                            , Attr.autoplay True
                             , Events.on "ended" <| D.succeed <| PreListening id False
                             ]
                             []

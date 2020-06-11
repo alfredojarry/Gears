@@ -53,8 +53,6 @@ update msg state =
 
 subs : List (Sub Msg)
 subs =
-    -- [ BE.onKeyDown <| D.andThen (\str -> D.succeed <| HoldDown str) <| D.field "code" D.string --original
-    -- , BE.onKeyUp <| D.andThen (\str -> D.succeed <| HoldUp str) <| D.field "code" D.string --
-    [ BE.onKeyDown <| D.andThen (\str -> D.succeed <| HoldDown str) <| D.field "key" D.string --mod keyboard
-    , BE.onKeyUp <| D.andThen (\str -> D.succeed <| HoldUp str) <| D.field "key" D.string --
+    [ BE.onKeyDown <| D.andThen (\str -> D.succeed <| HoldDown str) <| D.field "code" D.string
+    , BE.onKeyUp <| D.andThen (\str -> D.succeed <| HoldUp str) <| D.field "code" D.string
     ]

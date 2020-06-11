@@ -115,24 +115,16 @@ type Mode
     | SelectMotor
     | Alternate
     | Solo
-    | Zoom --mod touchZoom
 
 
 keyCodeToMode : List ( String, Mode )
 keyCodeToMode =
-    -- [ ( "KeyD", Move ) --original
-    -- , ( "KeyV", Nav ) --
-    -- , ( "Delete", SupprMode ) --
-    -- , ( "Backspace", SupprMode ) --
-    -- , ( "KeyQ", Alternate ) --
-    -- , ( "KeyS", Solo ) --
-    [ ( "d", Move ) --mod keyboard
-    , ( "v", Nav ) --
-    , ( "Delete", SupprMode ) --
-    , ( "Backspace", SupprMode ) --
-    , ( "a", Alternate ) --
-    , ( "s", Solo ) --
-    , ( "z", Zoom ) --mod touchZoom
+    [ ( "KeyD", Move )
+    , ( "KeyV", Nav )
+    , ( "Delete", SupprMode )
+    , ( "Backspace", SupprMode )
+    , ( "KeyQ", Alternate )
+    , ( "KeyS", Solo )
     ]
 
 
@@ -376,9 +368,10 @@ update msg ( model, mobile ) =
 
                         _ ->
                             return
+
                 _ ->
                     return
-            
+
         CursorLeft ->
             case model.edit of
                 [ id ] ->
@@ -391,7 +384,7 @@ update msg ( model, mobile ) =
 
                 _ ->
                     return
-                    
+
         NewBead c ->
             case addBead model mobile <| Collar.beadFromContent c of
                 Just ( newModel, newMobile, id ) ->
@@ -920,8 +913,7 @@ update msg ( model, mobile ) =
 
                 Just e ->
                     case e.action of
-                        -- Interact.DragEnded False -> --original
-                        Interact.DragEnded False _ -> --mod Pointers multitouch 
+                        Interact.DragEnded False ->
                             { return | model = { newModel | dragging = NoDrag }, toUndo = Cancel }
 
                         _ ->
@@ -2003,39 +1995,7 @@ manageInteractEvent event model mobile =
 
                         _ ->
                             return
-                            
-        Zoom -> --mod touchZoom (visual or audio)
-            case ( event.item, event.action ) of --
-                ( ISurface, Interact.Dragged { start, absD } _ _ ) -> --
-                    let --
-                        pointZoom = PanSvg.mapOut ( Tuple.first start ) model.svg --
-                        factorZoom = 20 * Vec.getY absD --
-                    in --
-                    update ( SvgMsg ( PanSvg.ZoomPoint factorZoom (Vec.getX pointZoom, Vec.getY pointZoom) ) ) ( model, mobile ) --
-                    
-                ( IPack, Interact.Dragged { start, absD } _ _ ) -> --
-                    let --
-                        pointZoom = PanSvg.mapOut ( Tuple.first start ) model.pack.svg --
-                        factorZoom = 20 * Vec.getY absD --
-                    in --
-                    update ( PackMsg ( Pack.SvgMsg ( PanSvg.ZoomPoint factorZoom ( Vec.getX pointZoom, Vec.getY pointZoom ) ) ) ) ( model, mobile ) --
 
-                ( IWheel id, Interact.Dragged { absD } _ _ ) -> --
-                    let --
-                        res = --
-                            doVolumeChange id absD mobile model.engine --
-                    in --
-                    { return | --
-                        model = { model | dragging = VolumeChange } --
-                                        , mobile = res.mobile --
-                                        , toUndo = res.toUndo --
-                                        , toEngine = res.toEngine --
-                    }
-
-                _ -> --
-                    return --
-                         
-                 
         SelectMotor ->
             case ( event.item, event.action ) of
                 ( IWheel ( id, [] ), Interact.Clicked _ ) ->
@@ -2047,7 +2007,6 @@ manageInteractEvent event model mobile =
 
                 _ ->
                     return
-
 
         ChangeSound id ->
             case ( event.item, event.action ) of
@@ -2092,8 +2051,7 @@ manageInteractEvent event model mobile =
                         ( _, Interact.HoldEnded ) ->
                             { return | toUndo = Cancel, outMsg = Just UnSolo }
 
-                        -- ( _, Interact.DragEnded _ ) -> --original
-                        ( _, Interact.DragEnded _ _ ) -> --mod Pointers multitouch 
+                        ( _, Interact.DragEnded _ ) ->
                             { return | toUndo = Cancel, outMsg = Just UnSolo }
 
                         _ ->
@@ -2120,8 +2078,7 @@ manageInteractEvent event model mobile =
                                     }
                             }
 
-                        -- ( _, Interact.DragEnded True, Alterning id1 (Just id2) _ ) -> --original
-                        ( _, Interact.DragEnded True _, Alterning id1 (Just id2) _ ) -> --mod Pointers multitouch 
+                        ( _, Interact.DragEnded True, Alterning id1 (Just id2) _ ) ->
                             let
                                 newMobile =
                                     List.foldl
@@ -2141,8 +2098,7 @@ manageInteractEvent event model mobile =
                                         [ id1, id2 ]
                             }
 
-                        -- ( _, Interact.DragEnded _, _ ) -> --original
-                        ( _, Interact.DragEnded _ _, _ ) -> --mod Pointers multitouch 
+                        ( _, Interact.DragEnded _, _ ) ->
                             { return | model = { model | dragging = NoDrag } }
 
                         _ ->
@@ -2177,8 +2133,7 @@ manageInteractEvent event model mobile =
                         | model = { model | dragging = Content ( newPos, Sound.length s ) }
                     }
 
-                -- ( ISound s, Interact.DragEnded True, Content ( p, _ ) ) -> --original
-                ( ISound s, Interact.DragEnded True _, Content ( p, _ ) ) -> --mod Pointers multitouch
+                ( ISound s, Interact.DragEnded True, Content ( p, _ ) ) ->
                     update (NewGear p <| Content.S s) ( { model | dragging = NoDrag }, mobile )
 
                 -- FROM PACK
@@ -2216,8 +2171,7 @@ manageInteractEvent event model mobile =
                             { model | dragging = Packed newPos id, pack = Pack.update (Pack.InitDrag id) model.pack }
                     }
 
-                -- ( IPacked id, Interact.DragEnded True, Packed pos _ ) -> --original 
-                ( IPacked id, Interact.DragEnded True _, Packed pos _ ) -> --mod Pointers multitouch 
+                ( IPacked id, Interact.DragEnded True, Packed pos _ ) ->
                     let
                         p =
                             Coll.get id model.pack.wheels
@@ -2333,8 +2287,7 @@ interactPlay on event model mobile =
         ( ISurface, Interact.Dragged { newPos } ZSurface _, Cut ( p1, _ ) _ ) ->
             { return | model = { model | dragging = Cut ( p1, newPos ) <| computeCuts ( p1, newPos ) mobile.gears } }
 
-        -- ( ISurface, Interact.DragEnded True, Cut _ cuts ) -> --original
-        ( ISurface, Interact.DragEnded True _, Cut _ cuts ) -> --mod Pointers multitouch 
+        ( ISurface, Interact.DragEnded True, Cut _ cuts ) ->
             let
                 ( gears, motored ) =
                     Motor.remove cuts mobile.motor mobile.gears on
@@ -2369,8 +2322,7 @@ interactPlay on event model mobile =
             in
             { return | mobile = res.mobile, toUndo = res.toUndo, toEngine = res.toEngine }
 
-        -- ( _, Interact.DragEnded _, VolumeChange ) -> --original
-        ( _, Interact.DragEnded _ _, VolumeChange ) -> --mod Pointers multitouch
+        ( _, Interact.DragEnded _, VolumeChange ) ->
             { return | model = { model | dragging = NoDrag }, toUndo = Do }
 
         -- LINK -> MOTOR
@@ -2391,8 +2343,7 @@ interactPlay on event model mobile =
             in
             { return | model = { model | dragging = HalfLink ( from, toCenter ) } }
 
-        -- ( IWheel ( _, [] ), Interact.DragEnded True, CompleteLink l ) -> --original
-        ( IWheel ( _, [] ), Interact.DragEnded True _, CompleteLink l ) -> --mod Pointers multitouch
+        ( IWheel ( _, [] ), Interact.DragEnded True, CompleteLink l ) ->
             let
                 ( gears, toPlay ) =
                     Motor.add l mobile.gears <| Engine.playingIds model.engine
@@ -2408,8 +2359,7 @@ interactPlay on event model mobile =
             }
 
         -- CLEAN DRAG
-        -- ( _, Interact.DragEnded _, _ ) -> --original
-        ( _, Interact.DragEnded _ _, _ ) -> --mod Pointers multitouch
+        ( _, Interact.DragEnded _, _ ) ->
             { return | model = { model | dragging = NoDrag } }
 
         _ ->
@@ -2444,8 +2394,7 @@ interactHarmonize event model mobile =
         ( IResizeHandle id add, Interact.Dragged { startD } _ _, SizeChange ) ->
             { return | mobile = doResize id startD add mobile, toUndo = Group }
 
-        -- ( _, Interact.DragEnded _, SizeChange ) -> --original
-        ( _, Interact.DragEnded _ _, SizeChange ) -> --mod Pointers multitouch
+        ( _, Interact.DragEnded _, SizeChange ) ->
             { return | model = { model | dragging = NoDrag }, toUndo = Do }
 
         -- LINK -> HARMO
@@ -2466,8 +2415,7 @@ interactHarmonize event model mobile =
             in
             { return | model = { model | dragging = HalfLink ( from, toCenter ) } }
 
-        -- ( IWheel ( _, [] ), Interact.DragEnded True, CompleteLink l ) -> --original
-        ( IWheel ( _, [] ), Interact.DragEnded True _, CompleteLink l ) -> --mod Pointers multitouch
+        ( IWheel ( _, [] ), Interact.DragEnded True, CompleteLink l ) ->
             let
                 ( newGears, mayFract ) =
                     doLinked l mobile.gears
@@ -2488,8 +2436,7 @@ interactHarmonize event model mobile =
 
         -- TODO if doLinked returns gears unchanged, empty undo
         -- CLEAN DRAG
-        -- ( _, Interact.DragEnded _, _ ) -> --original
-        ( _, Interact.DragEnded _ _, _ ) -> --mod Pointers multitouch
+        ( _, Interact.DragEnded _, _ ) ->
             { return | model = { model | dragging = NoDrag } }
 
         _ ->
@@ -2577,8 +2524,7 @@ interactMove event model mobile =
                     , cmd = Cmd.map WaveMsg cmd
                 }
 
-        -- ( _, Interact.DragEnded _, Moving ) -> --original
-        ( _, Interact.DragEnded _ _, Moving ) -> --mod Pointers multitouch
+        ( _, Interact.DragEnded _, Moving ) ->
             Just { return | model = { model | dragging = NoDrag }, mobile = mobile, toUndo = Do }
 
         ( IWheel ( id, [] ), Interact.Dragged { newPos } ZPack _, _ ) ->
@@ -2601,8 +2547,7 @@ interactMove event model mobile =
                         }
                 }
 
-        -- ( IWheel ( id, [] ), Interact.DragEnded True, Packing ) -> --original
-        ( IWheel ( id, [] ), Interact.DragEnded True _, Packing ) -> --mod Pointers multitouch
+        ( IWheel ( id, [] ), Interact.DragEnded True, Packing ) ->
             Just
                 { return
                     | model = { model | dragging = NoDrag, pack = Pack.update Pack.PackIt model.pack }
@@ -2650,9 +2595,8 @@ interactMove event model mobile =
                 _ ->
                     Nothing
 
-        -- ( IWheel ( id, [] ), Interact.DragEnded True, Waving ) -> --original
-        ( IWheel ( id, [] ), Interact.DragEnded True _, Waving ) -> --mod Pointers multitouch
-             case model.edit of
+        ( IWheel ( id, [] ), Interact.DragEnded True, Waving ) ->
+            case model.edit of
                 [ waveId ] ->
                     let
                         waveG =
