@@ -12,7 +12,6 @@ if (process.argv[2]) {
   if ( ! (Number.isInteger(port) && port > 1028 && port < 49151) ) {
     console.log('Invalid port in first arguments : ' + port)
     console.log('Port should be an integer in [1029, 49150]')
-    return;
   }
 }
 
@@ -21,7 +20,7 @@ const fs = require('fs')
     , readdirRec = require('fs-readdir-recursive')
     , staticRoute = require('static-route')
     , formidable = require('formidable')
-    , port = process.argv[2] || 12345
+    , port = process.argv[2] || 3000
     , soundPath = process.argv[3] || './sons/'
     , soundExtensions = ['.wav']
     , savePath = process.argv[4] || './saves/'
