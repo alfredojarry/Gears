@@ -10,7 +10,7 @@
     "lib": "lib"
   },
   "scripts": {
-    "start": "elm make --debug --output=elmApp.js src/Main.elm"
+    "start": "elm make --debug --output=elmApp.js src/Main.elm && node index.js 3001"
   },
   "author": "cbossut",
   "license": "SEE LICENSE IN LICENSE.md",
